@@ -1,0 +1,60 @@
+name: Build PS5 Payloads
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.txt"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.txt"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bash clang-15 lld-15 socat cmake meson pkg-config wget python3 python3-pyelftools unzip
+
+      - name: Download ps5-payload-sdk source
+        run: |
+          git clone https://github.com/ps5-payload-dev/sdk.git /tmp/ps5-payload-sdk
+          cd /tmp/ps5-payload-sdk
+
+      - name: Build and install ps5-payload-sdk
+        run: |
+          cd /tmp/ps5-payload-sdk
+          make
+          sudo make DESTDIR=/opt/ps5-payload-sdk install
+          echo "PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk" >> $GITHUB_ENV
+
+      - name: Build and install libcxx
+        run: |
+          cd /tmp/ps5-payload-sdk
+          ./libcxx.sh
+
+      - name: Build hello_world sample
+        run: |
+          export PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
+          cd /tmp/ps5-payload-sdk/samples/hello_world
+          make
+
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ps5-payloads
+          path: |
+            *.elf
+            
