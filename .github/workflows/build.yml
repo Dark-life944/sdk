@@ -1,24 +1,33 @@
-name: Build PS5 Payloads 
+name: Build PS5 Payloads
 
 on:
   push:
     branches:
       - main
+
   pull_request:
     branches:
       - main
+      
+  workflow_dispatch:  
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Log workflow trigger
+        run: |
+          echo "Workflow triggered successfully on event: ${{ github.event_name }}"
+          echo "Branch: ${{ github.ref_name }}"
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bash clang-15 lld-15 socat cmake meson pkg-config wget python3 python3-pyelftools unzip
+          sudo apt-get install -y bash clang-15 lld-15 socat cmake meson pkg-config wget python3 python3-pyelftools unzip git
 
       - name: Download ps5-payload-sdk source
         run: |
@@ -28,21 +37,25 @@ jobs:
       - name: Build and install ps5-payload-sdk
         run: |
           cd /tmp/ps5-payload-sdk
-          make
-          sudo make DESTDIR=/opt/ps5-payload-sdk install
+          make || { echo "make failed"; exit 1; }
+          sudo make DESTDIR=/opt/ps5-payload-sdk install || { echo "install failed"; exit 1; }
           echo "PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk" >> $GITHUB_ENV
 
       - name: Build and install libcxx
         run: |
           cd /tmp/ps5-payload-sdk
-          ./libcxx.sh
+          ./libcxx.sh || { echo "libcxx.sh failed"; exit 1; }
 
       - name: Build hello_world sample
         run: |
           export PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
           cd /tmp/ps5-payload-sdk/samples/hello_world
-          make
+          make || { echo "hello_world build failed"; exit 1; }
 
+     
+      - name: Check for artifacts
+        run: |
+          ls -la $GITHUB_WORKSPACE/*.elf || { echo "No ELF files found"; exit 1; }
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -50,4 +63,3 @@ jobs:
           name: ps5-payloads
           path: |
             *.elf
-            
