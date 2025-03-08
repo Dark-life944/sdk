@@ -49,7 +49,7 @@ jobs:
       - name: Build hello_world sample
         run: |
           export PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
-          cd /ps5-payload-sdk/samples/hello_world
+          cd /samples/hello_world
           make || { echo "hello_world build failed"; exit 1; }
 
      
