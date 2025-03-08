@@ -43,13 +43,13 @@ jobs:
 
       - name: Build and install libcxx
         run: |
-          cd /tmp/ps5-payload-sdk
+          cd $GITHUB_WORKSPACE
           ./libcxx.sh || { echo "libcxx.sh failed"; exit 1; }
 
       - name: Build hello_world sample
         run: |
           export PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
-          cd /tmp/ps5-payload-sdk/samples/hello_world
+          cd /ps5-payload-sdk/samples/hello_world
           make || { echo "hello_world build failed"; exit 1; }
 
      
