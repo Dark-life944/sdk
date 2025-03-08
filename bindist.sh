@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash 
 #   Copyright (C) 2024 John Törnblom
 #
 # This file is free software; you can redistribute it and/or modify it
